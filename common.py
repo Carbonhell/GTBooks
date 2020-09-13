@@ -1,11 +1,12 @@
 from enum import Enum
-from config import icons
+from config import ICONS
 
 class MalusType(Enum):
-	INJURED = {'name': 'Injured', 'icon': icons['injured']}
-	DOWNED = {'name': 'Downed', 'icon': icons['downed']}
-	AIRBORNE = {'name': 'Airborne', 'icon': icons['airborne']}
-	ALL = {'name': 'All', 'icon': icons['all_maluses']}
+	INJURED = {'name': 'Injured', 'icon': ICONS['injured']}
+	DOWNED = {'name': 'Downed', 'icon': ICONS['downed']}
+	AIRBORNE = {'name': 'Airborne', 'icon': ICONS['airborne']}
+	ALL = {'name': 'All', 'icon': ICONS['all_maluses']}
+	NONE = None
 
 	@classmethod
 	def from_str(cls, word):
@@ -17,5 +18,7 @@ class MalusType(Enum):
 			return cls.AIRBORNE
 		elif word == 'All':
 			return cls.ALL
+		elif word == 'None':
+			return cls.NONE
 		else:
 			raise NotImplementedError()

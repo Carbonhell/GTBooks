@@ -1,5 +1,4 @@
-from wp_json_api import request_item, RequestType
-from config import icons
+from config import ICONS
 from common import MalusType
 
 class Hero:
@@ -54,69 +53,66 @@ class Hero:
 		'Water': 0x2d84bc,
 		'Earth': 0x8f4f1a
 	}
-	def __init__(self, name):
-		self.name = name
-		self.status = False
-	def load(self):
-		response = request_item(RequestType.HEROES, {'name':self.name})
-		if response:
-			response = response[0]
-		else:
-			return False
-		self.status = True # TODO: true only if request 200ed
-		self.link = response['link']
-		self.full_name = response['title']['rendered']
-		response = response['acf'] # important custom info
-		self.atk = response[Hero.ATK_KEY]
-		self.hp = response[Hero.HP_KEY]
-		self.defense = response[Hero.DEF_KEY]
-		self.heal = response[Hero.HEAL_KEY]
-		self.crit = response[Hero.CRIT_KEY]
-		self.dmgred = response[Hero.DMGRED_KEY]
+	def __init__(self):
+		self.version = 0 # Forces a reload from the API
+
+	def reload(self, hero_data: dict):
+		self.version = hero_data['_links']['version-history'][0]['count']
+		self.link = hero_data['link']
+		self.full_name = hero_data['title']['rendered']
+		hero_data = hero_data['acf'] # important custom info
+		self.atk = hero_data.get(Hero.ATK_KEY, '')
+		self.hp = hero_data.get(Hero.HP_KEY, '')
+		self.defense = hero_data.get(Hero.DEF_KEY, '')
+		self.heal = hero_data.get(Hero.HEAL_KEY, '')
+		self.crit = hero_data.get(Hero.CRIT_KEY, '')
+		self.dmgred = hero_data.get(Hero.DMGRED_KEY, '')
 
 		self.resistances = {}
-		if response[Hero.BASICRES_KEY]: self.resistances['Basic'] = {'icon':icons['basic'], 'value': response[Hero.BASICRES_KEY]}
-		if response[Hero.LIGHTRES_KEY]: self.resistances['Light'] = {'icon':icons['light'], 'value': response[Hero.LIGHTRES_KEY]}
-		if response[Hero.DARKRES_KEY]: self.resistances['Dark'] = {'icon': icons['dark'], 'value': response[Hero.DARKRES_KEY]}
-		if response[Hero.FIRERES_KEY]: self.resistances['Fire'] = {'icon': icons['fire'], 'value': response[Hero.FIRERES_KEY]}
-		if response[Hero.EARTHRES_KEY]: self.resistances['Earth'] = {'icon': icons['earth'], 'value': response[Hero.EARTHRES_KEY]}
-		if response[Hero.WATERRES_KEY]: self.resistances['Water'] = {'icon':icons['water'], 'value': response[Hero.WATERRES_KEY]}
+		if hero_data.get(Hero.BASICRES_KEY): self.resistances['Basic'] = {'icon':ICONS['basic'], 'value': hero_data.get(Hero.BASICRES_KEY, '')}
+		if hero_data.get(Hero.LIGHTRES_KEY): self.resistances['Light'] = {'icon':ICONS['light'], 'value': hero_data.get(Hero.LIGHTRES_KEY, '')}
+		if hero_data.get(Hero.DARKRES_KEY): self.resistances['Dark'] = {'icon': ICONS['dark'], 'value': hero_data.get(Hero.DARKRES_KEY, '')}
+		if hero_data.get(Hero.FIRERES_KEY): self.resistances['Fire'] = {'icon': ICONS['fire'], 'value': hero_data.get(Hero.FIRERES_KEY, '')}
+		if hero_data.get(Hero.EARTHRES_KEY): self.resistances['Earth'] = {'icon': ICONS['earth'], 'value': hero_data.get(Hero.EARTHRES_KEY, '')}
+		if hero_data.get(Hero.WATERRES_KEY): self.resistances['Water'] = {'icon':ICONS['water'], 'value': hero_data.get(Hero.WATERRES_KEY, '')}
 
-		self.height = response[Hero.HEIGHT_KEY]
-		self.weight = response[Hero.WEIGHT_KEY]
-		self.age = response[Hero.AGE_KEY]
-		self.species = response[Hero.SPECIES_KEY]
-		self.rarity = response[Hero.RARITY_KEY]
-		self.role = response[Hero.ROLE_KEY]
-		self.element = response[Hero.EL_KEY]
-		self.story = response[Hero.STORY_KEY]
-		self.picture = response[Hero.PICTURE_KEY]
+		self.height = hero_data.get(Hero.HEIGHT_KEY, '')
+		self.weight = hero_data.get(Hero.WEIGHT_KEY, '')
+		self.age = hero_data.get(Hero.AGE_KEY, '')
+		self.species = hero_data.get(Hero.SPECIES_KEY, '')
+		self.rarity = hero_data.get(Hero.RARITY_KEY, '')
+		self.role = hero_data.get(Hero.ROLE_KEY, '')
+		self.element = hero_data.get(Hero.EL_KEY, '')
+		self.story = hero_data.get(Hero.STORY_KEY, '')
+		self.picture = hero_data.get(Hero.PICTURE_KEY, '')
 		self.evolutions_pictures = [ # Can have missing values, interpreted as False
-			response[Hero.EVOLUTION1_KEY],
-			response[Hero.EVOLUTION2_KEY],
-			response[Hero.EVOLUTION3_KEY],
-			response[Hero.EVOLUTION4_KEY],
-			response[Hero.EVOLUTION5_KEY],
+			hero_data.get(Hero.EVOLUTION1_KEY, ''),
+			hero_data.get(Hero.EVOLUTION2_KEY, ''),
+			hero_data.get(Hero.EVOLUTION3_KEY, ''),
+			hero_data.get(Hero.EVOLUTION4_KEY, ''),
+			hero_data.get(Hero.EVOLUTION5_KEY, ''),
 		]
-		self.compatible_equipment = response[Hero.EQUIPMENT_KEY] # List of strings
-		self.overall_rating = response[Hero.RATING_KEY]
-		self.normal_atk_name = response[Hero.NORMALATKNAME_KEY]
-		self.normal_atk_description = response[Hero.NORMALATKDESC_KEY]
-		self.chain_skill_name = response[Hero.CHAINSKILLNAME_KEY]
-		self.chain_state_trigger = MalusType.from_str(response[Hero.CHAINSTATETRIGGER_KEY])
-		self.chain_state_result = MalusType.from_str(response[Hero.CHAINSTATERESULT_KEY])
-		self.chain_skill_description = response[Hero.CHAINSKILLDESC_KEY]
-		self.special_ability_name = response[Hero.SPECIALABILITYNAME_KEY]
-		self.special_ability_description = response[Hero.SPECIALABILITYDESC_KEY]
-		self.passives = response[Hero.PASSIVES_KEY]
-		self.colo_rating = response[Hero.COLORATING_KEY]
-		self.arena_rating = response[Hero.ARENARATING_KEY]
-		self.pve_rating = response[Hero.PVERATING_KEY]
-		self.tags = response[Hero.TAGS_KEY] # List of strings
-		self.exclusive_weapons = response[Hero.EXWEAPONS_KEY] # List of dicts
+		self.compatible_equipment = hero_data.get(Hero.EQUIPMENT_KEY, '') # List of strings
+		self.overall_rating = hero_data.get(Hero.RATING_KEY, '')
+		self.normal_atk_name = hero_data.get(Hero.NORMALATKNAME_KEY, '')
+		self.normal_atk_description = hero_data.get(Hero.NORMALATKDESC_KEY, '')
+		self.chain_skill_name = hero_data.get(Hero.CHAINSKILLNAME_KEY, '')
+		self.chain_state_trigger = hero_data.get(Hero.CHAINSTATETRIGGER_KEY, '')
+		if self.chain_state_trigger:
+			self.chain_state_trigger = MalusType.from_str(self.chain_state_trigger)
+		self.chain_state_result = hero_data.get(Hero.CHAINSTATERESULT_KEY, '')
+		if self.chain_state_result:
+			self.chain_state_result = MalusType.from_str(self.chain_state_result)
+		self.chain_skill_description = hero_data.get(Hero.CHAINSKILLDESC_KEY, '')
+		self.special_ability_name = hero_data.get(Hero.SPECIALABILITYNAME_KEY, '')
+		self.special_ability_description = hero_data.get(Hero.SPECIALABILITYDESC_KEY, '')
+		self.passives = hero_data.get(Hero.PASSIVES_KEY, '')
+		self.colo_rating = hero_data.get(Hero.COLORATING_KEY, '')
+		self.arena_rating = hero_data.get(Hero.ARENARATING_KEY, '')
+		self.pve_rating = hero_data.get(Hero.PVERATING_KEY, '')
+		self.tags = hero_data.get(Hero.TAGS_KEY, '') # List of strings
+		self.exclusive_weapons = hero_data.get(Hero.EXWEAPONS_KEY, '') # List of dicts, can be non present
 														# TODO: cross reference items (with id? name too)
-		
-		
 
 		self.scaled_picture = self.picture.split('.')
 		self.scaled_picture[-2] += '-150x150' # Get the part of the url before the extension, and add the scale modifier
